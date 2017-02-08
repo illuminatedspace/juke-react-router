@@ -4,6 +4,8 @@ import axios from 'axios';
 import initialState from '../initialState';
 import AUDIO from '../audio';
 
+import Artists from '../components/Artists.js';
+import Artist from '../components/Artist.js';
 import Albums from '../components/Albums.js';
 import Album from '../components/Album';
 import Sidebar from '../components/Sidebar';
@@ -22,13 +24,18 @@ export default class AppContainer extends Component {
     this.next = this.next.bind(this);
     this.prev = this.prev.bind(this);
     this.selectAlbum = this.selectAlbum.bind(this);
-    this.deselectAlbum = this.deselectAlbum.bind(this);
   }
 
   componentDidMount () {
     axios.get('/api/albums/')
       .then(res => res.data)
-      .then(album => this.onLoad(convertAlbums(album)));
+      .then(albums => this.onLoad(convertAlbums(albums)));
+
+    axios.get('/api/artists/')
+      .then(res => res.data)
+      .then(artists => this.setState({
+        artists: artists
+      }));
 
     AUDIO.addEventListener('ended', () =>
       this.next());
@@ -98,10 +105,6 @@ export default class AppContainer extends Component {
       }));
   }
 
-  deselectAlbum () {
-    this.setState({ selectedAlbum: {}});
-  }
-
   render () {
     return (
       <div id="main" className="container-fluid">
@@ -110,17 +113,17 @@ export default class AppContainer extends Component {
         </div>
         <div className="col-xs-10">
         {
-          this.state.selectedAlbum.id ?
-          <Album
-            album={this.state.selectedAlbum}
-            currentSong={this.state.currentSong}
-            isPlaying={this.state.isPlaying}
-            toggleOne={this.toggleOne}
-          /> :
-          <Albums
-            albums={this.state.albums}
-            selectAlbum={this.selectAlbum}
-          />
+          this.props.children ?
+          React.cloneElement(this.props.children, {
+            album: this.state.selectedAlbum,
+            currentSong: this.state.currentSong,
+            isPlaying: this.state.isPlaying,
+            toggleOne: this.toggleOne,
+            albums: this.state.albums,
+            selectAlbum: this.selectAlbum,
+            artists: this.state.artists
+          })
+          : null
         }
         </div>
         <Player
